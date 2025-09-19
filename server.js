@@ -180,9 +180,10 @@ app.delete('/api/delete-product/:id', async (req, res) => {
   }
 });
 
-// ---------- Stripe PaymentIntent ----------
+// ---------- Paystack ----------
+const paystack = require("paystack-api")(process.env.PAYSTACK_SECRET_KEY);
 
-async function createPaymentIntentHandler(req, res) {
+async function createPaystackOrderHandler(req, res) {
   try {
     const { cartItems, customer } = req.body;
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -197,43 +198,54 @@ async function createPaymentIntentHandler(req, res) {
       usdTotal += price * qty;
       usdSupplierTotal += sup * qty;
     }
+
     const profitUsd = usdTotal - usdSupplierTotal;
     if (profitUsd < 0) {
       return res.status(400).json({ success: false, message: 'supplier cost > price' });
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: usdTotal,
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
-      receipt_email: customer?.email || undefined
+    // Convert to kobo (Paystack expects NGN in kobo)
+    const usdToNgn = await fetchUsdToNgnRate();
+    const totalUsd = fromCents(usdTotal);
+    const totalNaira = totalUsd * usdToNgn;
+    const totalKobo = Math.round(totalNaira * 100);
+
+    const response = await paystack.transaction.initialize({
+      email: customer?.email || "guest@example.com",
+      amount: totalKobo,
+      currency: "NGN",
+      callback_url: process.env.PAYSTACK_CALLBACK_URL || "https://yourdomain.com/payment/callback",
+      metadata: {
+        cartItems,
+        customer
+      }
     });
 
     await createDraftOrder({
-      paymentId: paymentIntent.id,
+      paymentId: response.data.reference,
       cartItems,
       customer,
       usdTotalCents: usdTotal,
-      koboTotal: null,
+      koboTotal: totalKobo,
       supplierTotal: usdSupplierTotal,
       profitCents: profitUsd
     });
 
     res.json({
       success: true,
-      clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.id,
-      totalUsd: fromCents(usdTotal),
-      profitUsd: fromCents(profitUsd)
+      authorizationUrl: response.data.authorization_url,
+      reference: response.data.reference,
+      totalUsd: totalUsd,
+      totalKobo
     });
   } catch (err) {
-    console.error('create-payment-intent error', err);
+    console.error('create-paystack-order error', err.response?.data || err);
     res.status(500).json({ success: false, error: err.message });
   }
 }
 
-app.post('/api/create-payment-intent', createPaymentIntentHandler);
-app.post('/api/create-checkout-session', createPaymentIntentHandler); // alias
+app.post('/api/create-paystack-order', createPaystackOrderHandler);
+
 
 // ---------- OPay ----------
 

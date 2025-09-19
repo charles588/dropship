@@ -13,6 +13,7 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "nodemailer": "^7.0.6",
+    "paystack-api": "^2.0.6",
     "puppeteer": "^24.22.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
