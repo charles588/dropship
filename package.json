@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "ship.js",
   "scripts": {
+    "start": "node server.js",
+    "build": "npm rebuild sqlite3 --build-from-source",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
