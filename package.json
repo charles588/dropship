@@ -1,16 +1,11 @@
 {
   "name": "dropship",
   "version": "1.0.0",
-  "main": "ship.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm rebuild sqlite3 --build-from-source",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm rebuild sqlite3 --build-from-source"
   },
-  "keywords": [],
-  "author": "Egbo charles",
-  "license": "ISC",
-  "description": "A store that dropships product from aliexpress to customers",
   "dependencies": {
     "axios": "^1.12.2",
     "body-parser": "^2.2.0",
