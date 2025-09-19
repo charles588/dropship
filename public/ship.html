@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Charlie's Dropship Store</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+
 <style>
 :root{--accent:#0ea5a4;--muted:#6b7280}
 body{font-family:Inter,system-ui,Arial;margin:0;background:#f3f4f6;color:#111}
@@ -13,79 +14,95 @@ header{background:#fff;padding:12px 20px;border-bottom:1px solid #e6e6e6;display
 .main{max-width:1100px;margin:20px auto;display:grid;grid-template-columns:1fr 320px;gap:20px;padding:0 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px rgba(10,10,10,0.04)}
-.card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+.card img{width:100%;height:180px;object-fit:cover;border-radius:8px}
 .card h4{margin:10px 0 6px}
 .price{font-weight:700}
 .cart-btn{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 .sidebar{position:sticky;top:20px}
 .cart{background:#fff;padding:12px;border-radius:12px}
 .cart h3{margin:0 0 8px}
-.cart-list{max-height:360px;overflow:auto}
+.cart-list{max-height:200px;overflow:auto}
 .cart-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #eee}
 .small{font-size:13px;color:var(--muted)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:999}
-.modal.show{display:flex}
-.modal-card{width:520px;max-width:100%;background:#fff;padding:18px;border-radius:12px}
-input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e6e6;margin-top:6px}
-.row{display:flex;gap:8px}
-.row > *{flex:1}
-.success{display:none;text-align:center;padding:40px}
 .qty-btn{padding:2px 6px;border:none;background:#ddd;border-radius:4px;cursor:pointer}
 .remove-btn{padding:2px 6px;border:none;background:#ef4444;color:#fff;border-radius:4px;cursor:pointer}
+input,textarea{width:100%;margin-bottom:6px;padding:6px;border:1px solid #ddd;border-radius:6px}
 .admin-panel{background:#fff;padding:12px;margin-bottom:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:none}
-.admin-panel h3{margin-top:0}
-.admin-panel label{display:block;margin-top:6px}
-#adminStatus{margin-top:6px;font-size:13px;color:var(--accent);}
+.admin-tabs{display:flex;gap:8px;margin-bottom:12px}
+.admin-tabs button{padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;cursor:pointer}
+.admin-tabs button.active{background:var(--accent);color:#fff}
+#ordersTable,#productsTable{width:100%;border-collapse:collapse;font-size:13px}
+#ordersTable th,#ordersTable td,#productsTable th,#productsTable td{border:1px solid #ddd;padding:6px;text-align:left}
+#ordersTable th,#productsTable th{background:#f1f1f1}
 #adminAccessBtn{position:fixed;bottom:20px;right:20px;padding:10px 14px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;z-index:999}
 @media(max-width:900px){.main{grid-template-columns:1fr} .sidebar{position:relative}}
 </style>
 
-<!-- Stripe SDK -->
 <script src="https://js.stripe.com/v3/"></script>
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
 </head>
 <body>
 
 <header>
-  <div class="brand">My Dropship Store</div>
-  <div>
-    <button id="cartToggle" class="cart-btn">Cart (<span id="cartCount">0</span>)</button>
-  </div>
+  <div class="brand">Charlie's Dropship Store</div>
+  <div><button id="cartToggle" class="cart-btn">Cart (<span id="cartCount">0</span>)</button></div>
 </header>
 
-<!-- Admin Icon -->
 <button id="adminAccessBtn" title="Admin Panel">⚙️</button>
 
 <div class="main">
   <section>
-
     <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanelWrapper">
-      <h3>Admin: Add Product</h3>
-      <label>AliExpress URL
-        <input id="adminAliLink" placeholder="Paste AliExpress product URL">
-        <button type="button" id="fetchAli">Fetch Info</button>
-      </label>
-      <label>Title<input id="adminTitle"></label>
-      <label>Price ($)<input id="adminPrice" type="number"></label>
-      <label>Supplier Cost ($)<input id="adminCost" type="number"></label>
-      <label>SKU<input id="adminSKU"></label>
-      <label>Image URL<input id="adminImg"></label>
-      <button id="addProductBtn" class="cart-btn" style="margin-top:8px;">Add Product</button>
-      <div id="adminStatus"></div>
+      <div class="admin-tabs">
+        <button id="tabAddProduct" class="active">Add Product</button>
+        <button id="tabManage">Manage Products</button>
+        <button id="tabOrders">Orders</button>
+      </div>
+
+      <!-- Add Product -->
+      <div id="addProductSection">
+        <h3>Admin: Add Product</h3>
+        <label>Title<input id="adminTitle"></label>
+        <label>Price ($)<input id="adminPrice" type="number" step="0.01"></label>
+        <label>Supplier Cost ($)<input id="adminCost" type="number" step="0.01"></label>
+        <label>SKU<input id="adminSKU"></label>
+        <label>Image URL<input id="adminImg"></label>
+        <button id="addProductBtn" class="cart-btn" style="margin-top:8px;">Add Product</button>
+        <div id="adminStatus"></div>
+      </div>
+
+      <!-- Manage Products -->
+      <div id="manageProductsSection" style="display:none">
+        <h3>Manage Products</h3>
+        <div style="overflow:auto;max-height:400px">
+          <table id="productsTable">
+            <thead>
+              <tr><th>Title</th><th>Price</th><th>SKU</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div id="ordersSection" style="display:none">
+        <h3>Customer Orders</h3>
+        <button id="downloadCSV" class="cart-btn" style="margin-bottom:8px;">Download CSV</button>
+        <div style="overflow:auto;max-height:400px">
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Phone</th><th>Address</th>
+                <th>Items</th><th>Total</th><th>Provider</th><th>Status</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 style="margin:0">Products</h2>
-      <div class="small">Hand-picked niche products</div>
-    </div>
-
-    <div id="upsells" class="card small" style="margin-bottom:16px">
-      <strong>Recommended for you</strong>
-      <div id="upsellList" style="display:flex;gap:8px;margin-top:8px"></div>
-    </div>
-
+    <h2>Products</h2>
     <div id="productsGrid" class="grid"></div>
   </section>
 
@@ -96,135 +113,240 @@ input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid
       <div class="total" style="display:flex;justify-content:space-between;margin-top:12px;font-weight:700">
         <div>Total</div><div id="cartTotal">$0.00</div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <button id="checkoutBtn" class="cart-btn" style="flex:1">Checkout</button>
-        <button id="clearBtn" style="background:#ef4444;color:#fff;border:0;padding:8px;border-radius:8px">Clear</button>
+
+      <div id="customerForm" style="margin-top:12px">
+        <h4 style="margin:0 0 6px">Your Details</h4>
+        <input id="custName" placeholder="Full Name">
+        <input id="custEmail" type="email" placeholder="Email">
+        <input id="custPhone" placeholder="Phone">
+        <textarea id="custAddress" placeholder="Shipping Address"></textarea>
       </div>
-      <div class="small" style="margin-top:10px">Orders auto-send to supplier after payment</div>
+
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        <button id="checkoutStripe" class="cart-btn">Checkout with Stripe</button>
+        <button id="checkoutOpay" class="cart-btn" style="background:#0045BA;color:#fff;">Pay with OPay</button>
+        <button id="clearBtn" style="background:#ef4444;color:#fff;border:0;padding:8px;border-radius:8px">Clear Cart</button>
+      </div>
     </div>
   </aside>
 </div>
 
-<!-- Checkout Modal & Success Page remain unchanged -->
-<!-- ... your existing modal & success HTML ... -->
-
 <script>
 (async function(){
   const API='/api';
-  const stripe=Stripe(window.__STRIPE_PK||'pk_test_replace');
-  let elements, card, cardMounted=false;
   let PRODUCTS=[], cart=JSON.parse(localStorage.getItem('ds_cart')||'[]');
 
   const productsGrid=document.getElementById('productsGrid');
-  const upsellList=document.getElementById('upsellList');
   const cartList=document.getElementById('cartList');
   const cartTotal=document.getElementById('cartTotal');
   const cartCount=document.getElementById('cartCount');
-  const checkoutBtn=document.getElementById('checkoutBtn');
   const clearBtn=document.getElementById('clearBtn');
-  const checkoutModal=document.getElementById('checkoutModal');
-  const placePayBtn=document.getElementById('placePayBtn');
-  const cancelCheckout=document.getElementById('cancelCheckout');
-  const paymentMethod=document.getElementById('paymentMethod');
-  const stripeContainer=document.getElementById('stripeContainer');
-  const paypalContainer=document.getElementById('paypalContainer');
 
-  const adminTitle=document.getElementById('adminTitle');
-  const adminPrice=document.getElementById('adminPrice');
-  const adminCost=document.getElementById('adminCost');
-  const adminSKU=document.getElementById('adminSKU');
-  const adminImg=document.getElementById('adminImg');
-  const adminAliLink=document.getElementById('adminAliLink');
-  const fetchAliBtn=document.getElementById('fetchAli');
-  const addProductBtn=document.getElementById('addProductBtn');
+  const adminPanel=document.getElementById('adminPanelWrapper');
+  const tabAdd=document.getElementById('tabAddProduct');
+  const tabManage=document.getElementById('tabManage');
+  const tabOrders=document.getElementById('tabOrders');
+  const addProductSection=document.getElementById('addProductSection');
+  const manageProductsSection=document.getElementById('manageProductsSection');
+  const ordersSection=document.getElementById('ordersSection');
   const adminStatus=document.getElementById('adminStatus');
-  const adminPanelWrapper=document.getElementById('adminPanelWrapper');
-  const adminAccessBtn=document.getElementById('adminAccessBtn');
 
-  // Admin access button logic
-  adminAccessBtn.addEventListener('click', ()=>{
-    const pw = prompt('Enter admin password:');
-    if(pw==='itismecharles'){
-      adminPanelWrapper.style.display='block';
-      alert('Welcome, admin!');
-    } else {
-      alert('Incorrect password');
+  const ordersTableBody=document.querySelector('#ordersTable tbody');
+  const productsTableBody=document.querySelector('#productsTable tbody');
+
+  // Admin Access
+  document.getElementById('adminAccessBtn').addEventListener('click',()=>{
+    const pw=prompt("Enter admin password:");
+    if(pw==="itismecharles"){ adminPanel.style.display='block'; loadOrders(); loadProductsForAdmin(); }
+    else alert("Wrong password");
+  });
+
+  // Tabs
+  function showTab(tab){
+    addProductSection.style.display=(tab==='add')?'block':'none';
+    manageProductsSection.style.display=(tab==='manage')?'block':'none';
+    ordersSection.style.display=(tab==='orders')?'block':'none';
+    tabAdd.classList.toggle('active',tab==='add');
+    tabManage.classList.toggle('active',tab==='manage');
+    tabOrders.classList.toggle('active',tab==='orders');
+  }
+  tabAdd.onclick=()=>showTab('add');
+  tabManage.onclick=()=>{showTab('manage'); loadProductsForAdmin();};
+  tabOrders.onclick=()=>{showTab('orders'); loadOrders();};
+
+  // Add Product
+  document.getElementById('addProductBtn').addEventListener('click',async()=>{
+    const title=document.getElementById('adminTitle').value.trim();
+    const price=parseFloat(document.getElementById('adminPrice').value);
+    const supplierCost=parseFloat(document.getElementById('adminCost').value);
+    const sku=document.getElementById('adminSKU').value.trim();
+    const img=document.getElementById('adminImg').value.trim();
+
+    if(!title||isNaN(price)||isNaN(supplierCost)||!img){
+      adminStatus.textContent="⚠️ Missing fields";
+      adminStatus.style.color="red";
+      return;
+    }
+
+    const res=await fetch(`${API}/add-product`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        title,
+        price,
+        supplierCost,
+        supplier_sku: sku,
+        img
+      })
+    });
+
+    const data=await res.json();
+    if(data.success){
+      adminStatus.textContent="✅ Added";
+      adminStatus.style.color="green";
+      loadProducts();
+      loadProductsForAdmin();
+    }
+    else {
+      adminStatus.textContent="❌ Error "+data.error;
+      adminStatus.style.color="red";
     }
   });
 
-  function saveCart(){ localStorage.setItem('ds_cart', JSON.stringify(cart)); renderCart(); }
+  // Delete Product
+  async function deleteProduct(id){
+    if(!confirm("Delete this product?")) return;
+    const res=await fetch(`${API}/delete-product/${id}`,{method:"DELETE"});
+    const data=await res.json();
+    if(data.success){ loadProductsForAdmin(); loadProducts(); }
+    else alert("Delete failed: "+data.error);
+  }
+  window.deleteProduct=deleteProduct;
 
+  // Render Admin Products Table
+  async function loadProductsForAdmin(){
+    const res=await fetch(`${API}/products`); const data=await res.json();
+    if(data.success){
+      productsTableBody.innerHTML='';
+      data.products.forEach(p=>{
+        const tr=document.createElement('tr');
+        const priceVal = parseFloat(p.price)||0;
+        tr.innerHTML=`<td>${p.title}</td><td>$${priceVal.toFixed(2)}</td><td>${p.supplier_sku||''}</td>
+          <td><button onclick="deleteProduct('${p.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:6px;cursor:pointer">Delete</button></td>`;
+        productsTableBody.appendChild(tr);
+      });
+    }
+  }
+
+  // Cart
+  function saveCart(){ localStorage.setItem('ds_cart',JSON.stringify(cart)); renderCart(); }
   function renderCart(){
-    cartList.innerHTML=''; let total=0, count=0;
-    cart.forEach((i,index)=>{
-      total+=i.price*i.quantity;
-      count+=i.quantity;
-      const profit=((i.price-(i.supplierCost||0))*i.quantity/100).toFixed(2);
+    cartList.innerHTML=''; let total=0,count=0;
+    cart.forEach((i)=>{ total+=i.price*i.quantity; count+=i.quantity;
       const row=document.createElement('div'); row.className='cart-item';
-      row.innerHTML=`
-        <div style="flex:1">
-          ${i.title} <span class="small">(Profit: $${profit})</span><br>
-          <button class="qty-btn" data-index="${index}" data-action="decrease">-</button>
-          <span style="margin:0 6px">${i.quantity}</span>
-          <button class="qty-btn" data-index="${index}" data-action="increase">+</button>
-          <button class="remove-btn" data-index="${index}" style="margin-left:6px;">Remove</button>
-        </div>
-        <div>$${(i.price*i.quantity/100).toFixed(2)}</div>`;
+      row.innerHTML=`<div>${i.title} x${i.quantity}</div><div>$${(i.price*i.quantity).toFixed(2)}</div>`;
       cartList.appendChild(row);
     });
-    cartTotal.textContent=`$${(total/100).toFixed(2)}`;
-    cartCount.textContent=count;
+    cartTotal.textContent=`$${total.toFixed(2)}`; cartCount.textContent=count;
+  }
+  clearBtn.onclick=()=>{cart=[];saveCart();};
 
-    document.querySelectorAll('.qty-btn').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const idx=e.currentTarget.dataset.index;
-        const action=e.currentTarget.dataset.action;
-        if(action==='increase') cart[idx].quantity++;
-        else if(action==='decrease'){ cart[idx].quantity--; if(cart[idx].quantity<1) cart.splice(idx,1); }
+  // Load Products
+  async function loadProducts(){
+    const res=await fetch(`${API}/products`); const data=await res.json();
+    if(data.success){ PRODUCTS=data.products; productsGrid.innerHTML='';
+      PRODUCTS.forEach(p=>{
+        const card=document.createElement('div'); card.className='card';
+        const priceVal=parseFloat(p.price)||0;
+        card.innerHTML=`<img src="${p.img}"><h4>${p.title}</h4><div class="small">SKU: ${p.supplier_sku||''}</div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+            <div class="price">$${priceVal.toFixed(2)}</div>
+            <button class="cart-btn" data-id="${p.id}">Add</button></div>`;
+        productsGrid.appendChild(card);
+      });
+      productsGrid.querySelectorAll('.cart-btn').forEach(btn=>btn.onclick=()=>{
+        const prod=PRODUCTS.find(x=>x.id==btn.dataset.id);
+        const ex=cart.find(c=>c.id==prod.id);
+        if(ex) ex.quantity++;
+        else cart.push({id:prod.id,title:prod.title,price:parseFloat(prod.price)||0,quantity:1});
         saveCart();
       });
-    });
-    document.querySelectorAll('.remove-btn').forEach(btn=>{
-      btn.addEventListener('click', e=>{ const idx=e.currentTarget.dataset.index; cart.splice(idx,1); saveCart(); });
-    });
+    }
   }
 
-  function renderProducts(){
-    productsGrid.innerHTML='';
-    PRODUCTS.forEach(p=>{
-      const cardEl=document.createElement('div'); cardEl.className='card';
-      cardEl.innerHTML=`<img src="${p.img}" alt="${p.title}"><h4>${p.title}</h4><div class="small">SKU: ${p.supplier_sku}</div>
-      <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
-        <div class="price">$${(p.price/100).toFixed(2)}</div>
-        <button class="cart-btn" data-id="${p.id}">Add</button>
-      </div>`;
-      productsGrid.appendChild(cardEl);
-    });
-    document.querySelectorAll('.card .cart-btn').forEach(b=>b.addEventListener('click', e=>{
-      const id=e.currentTarget.dataset.id;
-      const prod = PRODUCTS.find(p=>p.id===id);
-      const exist = cart.find(c=>c.id===id);
-      if(exist) exist.quantity++; else cart.push({...prod, quantity:1});
-      saveCart();
-    }));
+  // Orders
+  async function loadOrders(){
+    const res=await fetch(`${API}/orders`); const data=await res.json();
+    if(data.success){ ordersTableBody.innerHTML='';
+      data.orders.forEach(o=>{
+        const tr=document.createElement('tr');
+        const totalVal=parseFloat(o.total)||0;
+        tr.innerHTML=`<td>${o.customer_name||''}</td><td>${o.customer_email||''}</td><td>${o.customer_phone||''}</td>
+          <td>${o.customer_address||''}</td><td>${o.items}</td><td>$${totalVal.toFixed(2)}</td>
+          <td>${o.provider}</td><td>${o.status}</td><td>${o.created_at}</td>`;
+        ordersTableBody.appendChild(tr);
+      });
+    }
   }
-
-  function renderUpsells(){
-    upsellList.innerHTML='';
-    PRODUCTS.slice(0,2).forEach(p=>{
-      const el=document.createElement('div'); el.style.minWidth='120px';
-      el.innerHTML=`<div style="text-align:center">
-        <img src="${p.img}" style="width:100px;height:60px;object-fit:cover;border-radius:6px">
-        <div class="small">${p.title}</div>
-        <div style="font-weight:700">$${(p.price/100).toFixed(2)}</div>
-      </div>`;
-      upsellList.appendChild(el);
+  document.getElementById('downloadCSV').onclick=()=>{
+    let csv="Name,Email,Phone,Address,Items,Total,Provider,Status,Date\n";
+    document.querySelectorAll('#ordersTable tbody tr').forEach(r=>{
+      csv+=[...r.children].map(td=>`"${td.innerText}"`).join(",")+"\n";
     });
-  }
+    const blob=new Blob([csv],{type:"text/csv"}),url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url;a.download="orders.csv";a.click(); URL.revokeObjectURL(url);
+  };
 
-  clearBtn.addEventListener('click', ()=>{ cart=[]; saveCart(); });
+  // Stripe Checkout (PaymentIntent)
+  document.getElementById('checkoutStripe').onclick=async()=>{
+    if(cart.length===0){alert("Cart is empty");return;}
+    const customer={
+      name:document.getElementById('custName').value,
+      email:document.getElementById('custEmail').value,
+      phone:document.getElementById('custPhone').value,
+      address:document.getElementById('custAddress').value,
+    };
+    const res=await fetch(`${API}/create-checkout-session`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        cartItems: cart.map(i=>({title:i.title,price:i.price,supplierCost:0,quantity:i.quantity})),
+        customer
+      })
+    });
+    const data=await res.json();
+    if(data.clientSecret){
+      const stripe=Stripe("YOUR_PUBLISHABLE_KEY"); // replace with your Stripe publishable key
+      const result=await stripe.confirmCardPayment(data.clientSecret);
+      if(result.error) alert("Stripe error: "+result.error.message);
+      else if(result.paymentIntent?.status==="succeeded"){ alert("✅ Payment successful!"); cart=[]; saveCart(); }
+    }
+    else alert("Stripe error: "+data.error);
+  };
 
-  // ... rest of your checkout and admin logic remains unchanged ...
+  // OPay Checkout
+  document.getElementById('checkoutOpay').onclick=async()=>{
+    if(cart.length===0){alert("Cart is empty");return;}
+    const customer={
+      name:document.getElementById('custName').value,
+      email:document.getElementById('custEmail').value,
+      phone:document.getElementById('custPhone').value,
+      address:document.getElementById('custAddress').value,
+    };
+    const res=await fetch(`${API}/create-opay-session`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        cartItems: cart.map(i=>({title:i.title,price:i.price,supplierCost:0,quantity:i.quantity})),
+        customer
+      })
+    });
+    const data=await res.json();
+    const payUrl=data?.data?.data?.link||data?.data?.data?.cashierUrl;
+    if(payUrl) window.location.href=payUrl;
+    else alert("OPay error: "+data.error);
+  };
+
+  // Init
+  loadProducts(); renderCart();
 })();
 </script>
 </body>
