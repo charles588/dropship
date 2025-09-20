@@ -300,7 +300,53 @@ async function createOpayOrderHandler(req, res) {
         }
       }
     );
+async function verifyPaystackPayment(req, res) {
+  try {
+    const { reference } = req.query; // Paystack will send ?reference=xxxx
 
+    if (!reference) {
+      return res.status(400).json({ success: false, message: "Reference required" });
+    }
+
+    // Verify with Paystack API
+    const verifyResp = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
+      }
+    );
+
+    const data = verifyResp.data.data;
+
+    if (data.status === "success") {
+      // ✅ Payment confirmed
+      // Save the order in your DB
+      await createDraftOrder({
+        paymentId: reference,
+        cartItems: data.metadata.cart,
+        customer: {
+          name: data.metadata.name,
+          email: data.customer.email,
+          phone: data.metadata.phone,
+          address: data.metadata.address,
+        },
+        usdTotalCents: 0, // optional if you don’t need USD
+        koboTotal: data.amount, // amount in kobo
+        supplierTotal: 0,
+        profitCents: 0
+      });
+
+      return res.json({ success: true, message: "Payment verified", order: data });
+    } else {
+      return res.status(400).json({ success: false, message: "Payment failed" });
+    }
+  } catch (err) {
+    console.error("verify-paystack error", err.response?.data || err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+app.get("/api/paystack-callback", verifyPaystackPayment);
     await createDraftOrder({
       paymentId: reference,
       cartItems,
